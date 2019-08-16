@@ -2,15 +2,17 @@
 var myApp = (function() {
   "use strict";
 
-  var cards = $("#cards");
-
-  // Create a public methods object
-  var methods = {};
-
-  // 1. display cards from data first
-  // display all cards from the data
+  var cards = $("#cards"),
+    bedroomFilter = $("#filter-bedroom"),
+    availabilityFilter = $("#filter-available-date");
 
   // Helper functions:
+
+  /**
+   * Formats bedrooms title depending on number of beds
+   * @param  {Number}  bed Numberic value from the allUnits array or JSON
+   * @return  {String}
+   */
   function _aptTypeToString(bed) {
     if (bed === 0) {
       return "Studio";
@@ -19,9 +21,12 @@ var myApp = (function() {
     }
   }
 
+  /**
+   * Formats a date
+   * @param  {String}  date e.g. "01/17/2019"
+   * @return  {String} returns a formatted date
+   */
   function _convertDateFormat(date) {
-    console.log("convertDateFormat called");
-
     var newDate = new Date(date);
     var monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     var newDateString = monthNames[newDate.getMonth()] + " " + newDate.getDate() + ", " + newDate.getFullYear();
@@ -29,17 +34,26 @@ var myApp = (function() {
     return newDateString;
   }
 
-  // if there are no units in allUnits array, display the message
-  if (allUnits.length === 0) {
-    cards.append("<p>There are no apartments matching your search.</p>");
-  }
+  /**
+   * Builds cards based on units data in filtered allUnits array
+   * @param  {Array}  data The data array or JSON file
+   */
+  function buildCards(data) {
+    console.log("building and displaying cards");
 
-  // Otherwise, display the cards
-  else {
-    // Loop through each item in allUnits array (our data) and create a card for each unit
-    $.each(allUnits, function(unit, unitData) {
-      // for each item in allUnits data, create a card string and fill out the info w/ data details
-      var CARD = `<div id="${unitData.unit_id}" class="availability-cards__card">
+    cards.empty();
+
+    // if there are no units in filtered allUnits array, display the message
+    if (data.length === 0) {
+      cards.append("<p>There are no apartments matching your search.</p>");
+    }
+
+    // Otherwise, display the cards
+    else {
+      // Loop through each item in filtered allUnits array (our data) and create a card for each unit
+      $.each(data, function(unit, unitData) {
+        // for each item in filtered allUnits data, create a card string and fill out the info w/ data details
+        var CARD = `<div id="${unitData.unit_id}" class="availability-cards__card">
                 <div class="availability-cards__title">Apartment #<span class="availability-cards__unit-number">${unitData.unit_number}</span></div>
                 <div class="availability-cards__img">
                   <div class="availability-cards__no-img">
@@ -52,8 +66,8 @@ var myApp = (function() {
                   <p class="darker-gray">Floorplan <span class="availability-cards__floorplan">B1</span></p>
                   <div class="availability-cards__blocks m-t-sm m-b-sm">
                     <p class="bigger-text"><span class="availability-cards__beds">${_aptTypeToString(unitData.bedrooms)}</span>, <span class="availability-cards__baths">${
-        unitData.bathroom
-      }</span> Bath</p>
+          unitData.bathroom
+        }</span> Bath</p>
                     <p class="darker-gray"><span class="availability-cards__sqft">${unitData.sq_ft}</span> Sq Ft</p>
                   </div>
                   <div class="availability-cards__blocks block-right">
@@ -65,23 +79,104 @@ var myApp = (function() {
                 </div>
               </div>`;
 
-      // append a card to the DOM
-      cards.append(CARD);
-    });
+        // append a card to the DOM
+        cards.append(CARD);
+      });
+    }
   }
 
+  // 2. FILTER first
+  // check filters
+  // if any active filters, filter the allUnit array and crate a new array -- filteredUnits
+  // build and render cards based on that array
+
   /**
-   * Extend the public methods object
-   * @param  {String}   name The new method name
-   * @param  {Function} fn   The new method
+   * Takes value of bedroom filter, if any, and produces the array to be used in filterData()
+   * @param  {String}  value The data array or JSON file
+   * @return  {Array} returns an array [bool, String]
    */
-  methods.extend = function(name, fn) {
-    methods[name] = fn;
+  var bedFilter = function checkBedroomFilter(value) {
+    var value = value || bedroomFilter.val();
+    var filterOn = value === "all" ? false : true;
+    return [filterOn, value];
   };
 
-  // Return public methods object
-  return methods;
+  /**
+   * Takes value of Timeframe filter, if any, and produces the array to be used in filterData()
+   * @param  {String}  value The data array or JSON file
+   * @return  {Array} returns an array [bool, String]
+   */
+  var timeFilter = function checkAvailabilityFilter(value) {
+    var value = value || availabilityFilter.val();
+    var filterOn = value === "all" ? false : true;
+    return [filterOn, value];
+  };
+
+  /**
+   * Takes results of each check filter functions and filters the data array
+   * @return  {Array} returns a formatted date
+   */
+  function filterData(bedFilter, timeFilter) {
+    console.log("filterData function is called");
+    console.log(bedFilter);
+    console.log(timeFilter);
+
+    var filteredArray = allUnits;
+
+    // filter by bedroom, if filter is active, and update the array
+    if (bedFilter[0]) {
+      console.log("filtering by bedrooms");
+      filteredArray = filteredArray.filter(function(unit) {
+        return unit.bedrooms == bedFilter[1];
+      });
+      console.log(filteredArray);
+    }
+
+    // filter by availability, if filter is active, and update the array
+    if (timeFilter[0]) {
+      console.log("filtering by availability");
+
+      var today = new Date().setHours(0, 0, 0, 0);
+      var cutoff;
+
+      if (timeFilter[1] === "0") {
+        // immediately available
+        cutoff = today;
+      } else if (timeFilter[1] === "30") {
+        cutoff = today + 2592000000;
+      } else if (timeFilter[1] === "60") {
+        cutoff = today + 5184000000;
+      } else if (timeFilter[1] === "90") {
+        cutoff = today + 7776000000;
+      }
+
+      filteredArray = filteredArray.filter(function(unit) {
+        var unitDate = new Date(unit.available).getTime();
+        console.log(timeFilter[1]);
+        return unitDate <= cutoff;
+      });
+      console.log(filteredArray);
+    }
+    console.log(filteredArray);
+
+    buildCards(filteredArray);
+  }
+
+  filterData(bedFilter(), timeFilter());
+
+  // 3. Add event listeners for filtes
+  // FILTERS EVENT LISTENERS
+  bedroomFilter.on("change", function() {
+    var filterInfo = bedFilter(this.value);
+    console.log(filterInfo);
+    filterData(filterInfo, timeFilter());
+  });
+
+  availabilityFilter.on("change", function() {
+    var filterInfo = timeFilter(this.value);
+    console.log(filterInfo);
+    filterData(timeFilter(), filterInfo);
+  });
 })();
 
-// 2. then add conditions for filtering
 // 3. try to get data from JSON w/ Fetch

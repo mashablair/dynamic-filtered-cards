@@ -4,7 +4,21 @@ var myApp = (function() {
 
   var cards = $("#cards"),
     bedroomFilter = $("#filter-bedroom"),
-    availabilityFilter = $("#filter-available-date");
+    availabilityFilter = $("#filter-available-date"),
+    allUnits = null;
+
+  // Get JSON object of units data asynchronously and filter/render initial cards
+  // assign fetched data object to allUnits variable for future use when filtering on click
+  Promise.all([fetch("data.json").then(res => res.json())])
+    .then(function(data) {
+      allUnits = data[0];
+      console.log(allUnits);
+      filterData(bedFilter(), timeFilter(), allUnits);
+    })
+    .catch(function(error) {
+      console.log(error);
+      cards.append("<p>Oops, something went wrong.</p>");
+    });
 
   /**
    * Takes value of bedroom filter, if any, and produces the array to be used in filterData()
@@ -70,14 +84,13 @@ var myApp = (function() {
 
   /**
    * Takes results of each check filter functions and filters the data array
-   * @return  {Array} returns a formatted date
+   * @return  {Array} returns a filtered arrau
    */
-  function filterData(bedFilter, timeFilter) {
+  function filterData(bedFilter, timeFilter, data) {
     console.log("filterData function is called");
-    console.log(bedFilter);
-    console.log(timeFilter);
 
-    var filteredArray = allUnits;
+    console.log(allUnits);
+    var filteredArray = data;
 
     // filter by bedroom, if filter is active, and update the array
     if (bedFilter[0]) {
@@ -108,7 +121,6 @@ var myApp = (function() {
 
       filteredArray = filteredArray.filter(function(unit) {
         var unitDate = new Date(unit.available).getTime();
-        console.log(timeFilter[1]);
         return unitDate <= cutoff;
       });
       console.log(filteredArray);
@@ -118,14 +130,12 @@ var myApp = (function() {
     renderCards(filteredArray);
   }
 
-  filterData(bedFilter(), timeFilter());
-
   // 3. Add event listeners for filtes
   // FILTERS EVENT LISTENERS
   bedroomFilter.on("change", function() {
     var filterInfo = bedFilter(this.value);
     console.log(filterInfo);
-    filterData(filterInfo, timeFilter());
+    filterData(filterInfo, timeFilter(), allUnits);
   });
 
   availabilityFilter.on("change", function() {
@@ -134,5 +144,3 @@ var myApp = (function() {
     filterData(timeFilter(), filterInfo);
   });
 })();
-
-// 3. try to get data from JSON w/ Fetch

@@ -1,6 +1,5 @@
 // all data for units
 var allUnits = [
-  // region 1, stack 1
   {
     unit_id: 1,
     unit_number: "101",
@@ -324,8 +323,6 @@ var allUnits = [
     ],
     photos_floorplan: ["https://cdngeneral.rentcafe.com/dmslivecafe/3/564325/xp0573772_A15a_2_FloorPlan.jpg,qp=1,amaxwidth=800,aquality=85,a.pagespeed.ic.OfD5ddjpJA.jpg"]
   },
-
-  // region 1, stack 2
   {
     unit_id: 19,
     unit_number: "501",

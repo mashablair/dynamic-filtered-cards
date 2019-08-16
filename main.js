@@ -7,7 +7,6 @@ var myApp = (function() {
     availabilityFilter = $("#filter-available-date");
 
   // Helper functions:
-
   /**
    * Formats bedrooms title depending on number of beds
    * @param  {Number}  bed Numberic value from the allUnits array or JSON
@@ -41,6 +40,7 @@ var myApp = (function() {
   function buildCards(data) {
     console.log("building and displaying cards");
 
+    // first, delete all card from the container
     cards.empty();
 
     // if there are no units in filtered allUnits array, display the message
@@ -48,39 +48,26 @@ var myApp = (function() {
       cards.append("<p>There are no apartments matching your search.</p>");
     }
 
-    // Otherwise, display the cards
+    // Otherwise, display the cards based on filter values
     else {
       // Loop through each item in filtered allUnits array (our data) and create a card for each unit
       $.each(data, function(unit, unitData) {
         // for each item in filtered allUnits data, create a card string and fill out the info w/ data details
-        var CARD = `<div id="${unitData.unit_id}" class="availability-cards__card">
-                <div class="availability-cards__title">Apartment #<span class="availability-cards__unit-number">${unitData.unit_number}</span></div>
-                <div class="availability-cards__img">
-                  <div class="availability-cards__no-img">
-                    <i class="iconm-images darker-gray"></i>
-                    <p class="darker-gray">No Image Available</p>
-                  </div>
-                  <img src="${unitData.photos_unit[0]}" alt="">
-                </div>
-                <div class="availability-cards__details">
-                  <p class="darker-gray">Floorplan <span class="availability-cards__floorplan">B1</span></p>
-                  <div class="availability-cards__blocks m-t-sm m-b-sm">
-                    <p class="bigger-text"><span class="availability-cards__beds">${_aptTypeToString(unitData.bedrooms)}</span>, <span class="availability-cards__baths">${
-          unitData.bathroom
-        }</span> Bath</p>
-                    <p class="darker-gray"><span class="availability-cards__sqft">${unitData.sq_ft}</span> Sq Ft</p>
-                  </div>
-                  <div class="availability-cards__blocks block-right">
-                    <p class="darker-gray">From <span class="bigger-text">$</span><span class="availability-cards__price bigger-text">${unitData.rent_price}</span></p>
-                    <p class="darker-gray">$<span class="availability-cards__sqft">${unitData.deposit}</span> Deposit</p>
-                  </div>
-                  <p class="bigger-text">Available <span class="availability-cards__date-available">${_convertDateFormat(unitData.available)}</span></p>
-                  <button class="availability-cards__btn m-t-md">UNIT DETAILS</button>
-                </div>
-              </div>`;
+        // gets html template string from view.js
+        var card = getView(
+          unitData.unit_id,
+          unitData.unit_number,
+          unitData.photos_unit[0],
+          unitData.bedrooms,
+          unitData.bathroom,
+          unitData.sq_ft,
+          unitData.rent_price,
+          unitData.deposit,
+          unitData.available
+        );
 
         // append a card to the DOM
-        cards.append(CARD);
+        cards.append(card);
       });
     }
   }
